@@ -87,7 +87,7 @@ def inference(image, keep_prob):
 
     # processed_image = utils.process_image(image, mean_pixel)
     # single channel version
-    processed_image = image.copy()
+    processed_image = image
 
     with tf.variable_scope("inference"):
         # image_net = vgg_net(weights, processed_image)
