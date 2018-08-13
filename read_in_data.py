@@ -115,8 +115,8 @@ def create_image_lists_pwc(image_dir, test=False):
     for directory in directories:
         file_list = []
         image_list[directory] = []
-        print(os.path.join(image_dir, "images", directory))
-        file_glob = os.path.join(image_dir, "images", directory, '*.' + 'png')
+        print(os.path.join(image_dir, "annotations", directory))
+        file_glob = os.path.join(image_dir, "annotations", directory, '*.' + 'png')
         file_list.extend(glob.glob(file_glob))
 
         if not file_list:
@@ -125,7 +125,7 @@ def create_image_lists_pwc(image_dir, test=False):
             for f in file_list:
 #                 print(f)
                 filename = os.path.splitext(f.split("/")[-1])[0]
-                annotation_file = os.path.join(image_dir, "annotations_patch_classify", directory, 'label_' + filename + '.png')
+                annotation_file = os.path.join(image_dir, "annotations_patch_classify", directory, filename + '.png')
 #                 print(annotation_file)
                 if os.path.exists(annotation_file):
                     record = {'image': f, 'annotation': annotation_file, 'filename': filename}

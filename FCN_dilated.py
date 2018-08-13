@@ -223,12 +223,27 @@ def main(argv=None):
         tf.summary.image("ground_truth", tf.cast(annotation, tf.uint8), max_outputs=FLAGS.batch_size)
         tf.summary.image("pred_annotation", tf.cast(pred_annotation, tf.uint8), max_outputs=FLAGS.batch_size)
         tf.summary.image("pred_annotation_ctx", tf.cast(pred_annotation_ctx, tf.uint8), max_outputs=FLAGS.batch_size)
-        loss = tf.reduce_mean((tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits,
+        weights = np.ones((FLAGS.class_num), dtype=np.int32)
+        weights[-1] = FLAGS.pos_weight
+        weights = tf.convert_to_tensor(weights, dtype=tf.int32)
+        if FLAGS.pos_weight == 1:
+            loss = tf.reduce_mean((tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits,
                                                                               labels=tf.squeeze(annotation, squeeze_dims=[3]),
                                                                               name="entropy")))
-        loss_ctx = tf.reduce_mean((tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits_ctx,
-                                                                              labels=tf.squeeze(annotation, squeeze_dims=[3]),
-                                                                              name="entropy_ctx")))
+            loss_ctx = tf.reduce_mean((tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits_ctx,
+                                                                                      labels=tf.squeeze(annotation,
+                                                                                                        squeeze_dims=[3]),
+                                                                                      name="entropy_ctx")))
+        else:
+            loss = tf.reduce_mean((tf.nn.weighted_cross_entropy_with_logits(targets = tf.one_hot(tf.squeeze(annotation, squeeze_dims=[3]), FLAGS.class_num, axis=-1),
+                                                                              logits=logits,
+                                                                              pos_weight=weights,
+                                                                              name="entropy")))
+            loss_ctx = tf.reduce_mean((tf.nn.weighted_cross_entropy_with_logits(
+              targets=tf.one_hot(tf.squeeze(annotation, squeeze_dims=[3]), FLAGS.class_num, axis=-1),
+              logits=logits_ctx,
+              pos_weight=weights,
+              name="entropy")))
         
         loss_summary = tf.summary.scalar("entropy", loss)
         loss_summary_ctx = tf.summary.scalar("entropy", loss_ctx)

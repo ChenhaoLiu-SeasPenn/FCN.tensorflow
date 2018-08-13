@@ -1,5 +1,6 @@
 import numpy as np
 import tensorflow as tf
+import TensorflowUtils as utils
 import pydensecrf.densecrf as dcrf
 
 def dense_crf(probs, class_num, img=None, n_iters=10, 
@@ -53,3 +54,44 @@ def dense_crf(probs, class_num, img=None, n_iters=10,
         preds[i, ...] = np.array(Q, dtype=np.float32).reshape((class_num, h, w)).transpose(1, 2, 0)
     
     return preds
+
+
+def vgg_net_singlechannel(weights, image):
+  # Modified vgg_net for single channel input. The first layer is replaced by a random kernel
+    layers = (
+        'conv1_1', 'relu1_1', 'conv1_2', 'relu1_2', 'pool1',
+
+        'conv2_1', 'relu2_1', 'conv2_2', 'relu2_2', 'pool2',
+
+        'conv3_1', 'relu3_1', 'conv3_2', 'relu3_2', 'conv3_3',
+        'relu3_3', 'conv3_4', 'relu3_4', 'pool3',
+
+        'conv4_1', 'relu4_1', 'conv4_2', 'relu4_2', 'conv4_3',
+        'relu4_3', 'conv4_4', 'relu4_4', 'pool4',
+
+        'conv5_1', 'relu5_1', 'conv5_2', 'relu5_2', 'conv5_3',
+        'relu5_3', 'conv5_4', 'relu5_4'
+    )
+
+    net = {}
+    current = image
+    for i, name in enumerate(layers):
+        kind = name[:4]
+        if kind == 'conv':
+            kernels, bias = weights[i][0][0][0][0]
+            # matconvnet: weights are [width, height, in_channels, out_channels]
+            # tensorflow: weights are [height, width, in_channels, out_channels]
+            if name[4:] == '1_1':
+              kernels = utils.weight_variable([3, 3, 1, 64], name=name+'_w')
+              bias = utils.bias_variable([64], name=name+'_b')
+            else:
+              kernels = utils.get_variable(np.transpose(kernels, (1, 0, 2, 3)), name=name + "_w")
+              bias = utils.get_variable(bias.reshape(-1), name=name + "_b")
+            current = utils.conv2d_basic(current, kernels, bias)
+        elif kind == 'relu':
+            current = tf.nn.relu(current, name=name)
+        elif kind == 'pool':
+            current = utils.avg_pool_2x2(current)
+        net[name] = current
+
+    return net

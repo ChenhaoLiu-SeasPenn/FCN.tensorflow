@@ -160,6 +160,9 @@ def main(argv=None):
         tf.summary.image("input_image", image, max_outputs=FLAGS.batch_size)
         tf.summary.image("ground_truth", tf.cast(annotation, tf.uint8), max_outputs=FLAGS.batch_size)
         tf.summary.image("pred_annotation", tf.cast(pred_annotation, tf.uint8), max_outputs=FLAGS.batch_size)
+        weights = np.ones((FLAGS.class_num), dtype=np.int32)
+        weights[-1] = FLAGS.pos_weight
+        weights = tf.convert_to_tensor(weights, dtype=tf.int32)
         if FLAGS.pos_weight == 1:
             loss = tf.reduce_mean((tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits,
                                                                               labels=tf.squeeze(annotation, squeeze_dims=[3]),
@@ -167,7 +170,7 @@ def main(argv=None):
         else:
             loss = tf.reduce_mean((tf.nn.weighted_cross_entropy_with_logits(targets = tf.one_hot(tf.squeeze(annotation, squeeze_dims=[3]), FLAGS.class_num, axis=-1),
                                                                               logits=logits,
-                                                                              pos_weight=tf.constant([1, 1, 1, 1, FLAGS.pos_weight]),
+                                                                              pos_weight=weights,
                                                                               name="entropy")))
         loss_summary = tf.summary.scalar("entropy", loss)
         iou_error, update_op = tf.metrics.mean_iou(pred_annotation, annotation, NUM_OF_CLASSESS)

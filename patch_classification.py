@@ -8,10 +8,12 @@ import read_in_data as scene_parsing
 import datetime
 import TFReader as dataset
 from six.moves import xrange
+from contrib import dense_crf, vgg_net_singlechannel
 
 FLAGS = tf.flags.FLAGS
 tf.flags.DEFINE_integer("batch_size", "2", "batch size for training")
 tf.flags.DEFINE_integer("class_num", "2", "number of classes")
+tf.flags.DEFINE_integer("gpu", "0", "specify which GPU to use")
 tf.flags.DEFINE_string("logs_dir", "logs/", "path to logs directory")
 tf.flags.DEFINE_string("data_dir", "Data_zoo/dataset/", "path to dataset")
 tf.flags.DEFINE_float("learning_rate", "1e-4", "Learning rate for Adam Optimizer")
@@ -67,7 +69,6 @@ def vgg_net(weights, image):
 
     return net
 
-
 def inference(image, keep_prob):
     """
     Semantic segmentation network definition
@@ -83,10 +84,14 @@ def inference(image, keep_prob):
 
     weights = np.squeeze(model_data['layers'])
 
-    processed_image = utils.process_image(image, mean_pixel)
+    # processed_image = utils.process_image(image, mean_pixel)
+    # single channel version
+    processed_image = image.copy()
 
     with tf.variable_scope("inference"):
-        image_net = vgg_net(weights, processed_image)
+        # image_net = vgg_net(weights, processed_image)
+        # single channel version
+        image_net = vgg_net_singlechannel(weights, processed_image)
         conv_final_layer = image_net["conv5_3"]
 
         pool5 = utils.max_pool_2x2(conv_final_layer)
@@ -130,15 +135,26 @@ def train(loss_val, var_list):
 def main(argv=None):
     with tf.device('/device:GPU:0'):
         keep_probability = tf.placeholder(tf.float32, name="keep_probabilty")
-        image = tf.placeholder(tf.float32, shape=[None, IMAGE_HEIGHT, IMAGE_WIDTH, 3], name="input_image")
+        # image = tf.placeholder(tf.float32, shape=[None, IMAGE_HEIGHT, IMAGE_WIDTH, 3], name="input_image")
+        # try using mere segmentation as input for this task
+        image = tf.placeholder(tf.float32, shape=[None, IMAGE_HEIGHT, IMAGE_WIDTH, 1], name="input_image")
         annotation = tf.placeholder(tf.int32, shape=[None, 4, 4, 1], name="annotation")
 
         pred_annotation, logits = inference(image, keep_probability)
         tf.summary.image("input_image", image, max_outputs=FLAGS.batch_size)
         tf.summary.image("ground_truth", tf.cast(annotation, tf.uint8), max_outputs=FLAGS.batch_size)
         tf.summary.image("pred_annotation", tf.cast(pred_annotation, tf.uint8), max_outputs=FLAGS.batch_size)
-        loss = tf.reduce_mean((tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits,
+        weights = np.ones((FLAGS.class_num), dtype=np.int32)
+        weights[-1] = FLAGS.pos_weight
+        weights = tf.convert_to_tensor(weights, dtype=tf.int32)
+        if FLAGS.pos_weight == 1:
+            loss = tf.reduce_mean((tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits,
                                                                               labels=tf.squeeze(annotation, squeeze_dims=[3]),
+                                                                              name="entropy")))
+        else:
+            loss = tf.reduce_mean((tf.nn.weighted_cross_entropy_with_logits(targets = tf.one_hot(tf.squeeze(annotation, squeeze_dims=[3]), FLAGS.class_num, axis=-1),
+                                                                              logits=logits,
+                                                                              pos_weight=weights,
                                                                               name="entropy")))
         # tf.nn.weighted_cross_entropy_with_logits
         
