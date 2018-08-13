@@ -23,6 +23,7 @@ tf.flags.DEFINE_bool('image_augmentation', "False", "Image augmentation: True/ F
 tf.flags.DEFINE_float('dropout', "0.5", "Probably of keeping value in dropout (valid values (0.0,1.0]")
 tf.flags.DEFINE_string('mode', "train", "Mode train/ test/ visualize")
 tf.flags.DEFINE_bool('tune_context', 'False', 'Tune context subnet')
+tf.flags.DEFINE_float('pos_weight', '1', 'Weight for FNs, higher increases recall')
 
 MODEL_URL = 'http://www.vlfeat.org/matconvnet/models/beta16/imagenet-vgg-verydeep-19.mat'
 
