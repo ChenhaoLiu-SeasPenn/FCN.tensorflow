@@ -304,7 +304,7 @@ def main(argv=None):
         elif FLAGS.mode == "test":
 
           test_records, _ = scene_parsing.read_dataset(FLAGS.data_dir, pwc=True, test=True)
-          #             print(test_records)
+          print(test_records)
           image_options_train = {'resize': True, 'resize_width': IMAGE_WIDTH, 'resize_height': IMAGE_HEIGHT,
                                  'image_augmentation': False}
           image_options_val = {'resize': True, 'resize_width': IMAGE_WIDTH, 'resize_height': IMAGE_HEIGHT}
