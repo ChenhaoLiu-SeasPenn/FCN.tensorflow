@@ -160,6 +160,7 @@ def main(argv=None):
         # tf.nn.weighted_cross_entropy_with_logits
         
         loss_summary = tf.summary.scalar("entropy", loss)
+        iou_error, update_op = tf.metrics.mean_iou(pred_annotation, annotation, NUM_OF_CLASSESS)
 
         trainable_var = tf.trainable_variables()
         if FLAGS.debug:
@@ -299,6 +300,31 @@ def main(argv=None):
 #             pred = np.squeeze(pred, axis=3)
 #             utils.save_image(pred[0].astype(np.uint8), os.path.join(FLAGS.logs_dir, "predictions"),
 #                              name="predict_" + str(predict_names))
+
+        elif FLAGS.mode == "test":
+
+          test_records, _ = scene_parsing.read_dataset(FLAGS.data_dir, pwc=True, test=True)
+          #             print(test_records)
+          image_options_train = {'resize': True, 'resize_width': IMAGE_WIDTH, 'resize_height': IMAGE_HEIGHT,
+                                 'image_augmentation': False}
+          image_options_val = {'resize': True, 'resize_width': IMAGE_WIDTH, 'resize_height': IMAGE_HEIGHT}
+
+          test_dataset = dataset.TrainVal.from_records(
+            test_records, test_records, image_options_train, image_options_val, FLAGS.batch_size, FLAGS.batch_size, pwc=True)
+
+          iou_result = np.zeros([int(np.ceil(len(test_records) / FLAGS.batch_size))])
+          it_test, _ = test_dataset.get_iterators()
+          next_test_images, next_test_annotations, next_test_name = it_test.get_next()
+          print('All images:{}, batch size: {}'.format(len(test_records), FLAGS.batch_size))
+          #             print(int(np.ceil(len(test_records) / FLAGS.batch_size)))
+          for i in range(int(np.ceil(len(test_records) / FLAGS.batch_size))):
+            test_images, test_annotations = sess.run([next_test_images, next_test_annotations])
+            feed_dict = {image: test_images, annotation: test_annotations, keep_probability: 1.0}
+
+            confusion = sess.run(update_op, feed_dict=feed_dict)
+            mean_iou = sess.run(iou_error)
+            print("Test batch {}, mean iou {}".format(i, mean_iou))
+            print(confusion)
 
 
 if __name__ == "__main__":
