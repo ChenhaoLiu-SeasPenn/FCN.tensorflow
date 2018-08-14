@@ -85,14 +85,14 @@ def inference(image, keep_prob):
 
     weights = np.squeeze(model_data['layers'])
 
-    # processed_image = utils.process_image(image, mean_pixel)
+    processed_image = utils.process_image(image, mean_pixel)
     # single channel version
-    processed_image = image
+    # processed_image = image
 
     with tf.variable_scope("inference"):
-        # image_net = vgg_net(weights, processed_image)
+        image_net = vgg_net(weights, processed_image)
         # single channel version
-        image_net = vgg_net_singlechannel(weights, processed_image)
+        # image_net = vgg_net_singlechannel(weights, processed_image)
         conv_final_layer = image_net["conv5_3"]
 
         pool5 = utils.max_pool_2x2(conv_final_layer)
@@ -134,11 +134,11 @@ def train(loss_val, var_list):
 
 
 def main(argv=None):
-    with tf.device('/device:GPU:0'):
+    with tf.device('/device:GPU:'+str(FLAGS.gpu)):
         keep_probability = tf.placeholder(tf.float32, name="keep_probabilty")
-        # image = tf.placeholder(tf.float32, shape=[None, IMAGE_HEIGHT, IMAGE_WIDTH, 3], name="input_image")
+        image = tf.placeholder(tf.float32, shape=[None, IMAGE_HEIGHT, IMAGE_WIDTH, 3], name="input_image")
         # try using mere segmentation as input for this task
-        image = tf.placeholder(tf.float32, shape=[None, IMAGE_HEIGHT, IMAGE_WIDTH, 1], name="input_image")
+        # image = tf.placeholder(tf.float32, shape=[None, IMAGE_HEIGHT, IMAGE_WIDTH, 1], name="input_image")
         annotation = tf.placeholder(tf.int32, shape=[None, 4, 4, 1], name="annotation")
 
         pred_annotation, logits = inference(image, keep_probability)
@@ -186,7 +186,7 @@ def main(argv=None):
             train_records, valid_records, image_options_train, image_options_val, FLAGS.batch_size, FLAGS.batch_size, pwc=True)
     #validation_dataset_reader = dataset.BatchDatset(valid_records, image_options_val)
 
-    with tf.device('/device:GPU:0'):
+    with tf.device('/device:GPU:'+str(FLAGS.gpu)):
         config = tf.ConfigProto(allow_soft_placement=True, log_device_placement=False)
         config.gpu_options.allow_growth = True
         sess = tf.Session(config= config)
