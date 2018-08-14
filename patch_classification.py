@@ -154,7 +154,7 @@ def main(argv=None):
                                                                               name="entropy")))
         else:
             loss = tf.reduce_mean((tf.nn.weighted_cross_entropy_with_logits(targets = tf.one_hot(tf.squeeze(annotation, squeeze_dims=[3]), FLAGS.class_num, axis=-1, dtype=tf.int32),
-                                                                              logits=logits,
+                                                                              logits=tf.cast(logits, tf.int32),
                                                                               pos_weight=weights,
                                                                               name="entropy")))
         # tf.nn.weighted_cross_entropy_with_logits
