@@ -153,7 +153,7 @@ def main(argv=None):
                                                                               labels=tf.squeeze(annotation, squeeze_dims=[3]),
                                                                               name="entropy")))
         else:
-            loss = tf.reduce_mean((tf.nn.weighted_cross_entropy_with_logits(targets = tf.one_hot(tf.squeeze(annotation, squeeze_dims=[3]), FLAGS.class_num, axis=-1, dtype=tf.float32),
+            loss = tf.reduce_mean((tf.nn.weighted_cross_entropy_with_logits(targets = tf.one_hot(tf.squeeze(annotation, squeeze_dims=[3]), FLAGS.class_num, axis=-1, dtype=tf.int32),
                                                                               logits=logits,
                                                                               pos_weight=weights,
                                                                               name="entropy")))
