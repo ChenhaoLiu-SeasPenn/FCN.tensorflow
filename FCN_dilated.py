@@ -226,7 +226,7 @@ def main(argv=None):
         tf.summary.image("pred_annotation_ctx", tf.cast(pred_annotation_ctx, tf.uint8), max_outputs=FLAGS.batch_size)
         weights = np.ones((FLAGS.class_num), dtype=np.int32)
         weights[-1] = FLAGS.pos_weight
-        weights = tf.convert_to_tensor(weights, dtype=tf.int32)
+        weights = tf.convert_to_tensor(weights, dtype=tf.float32)
         if FLAGS.pos_weight == 1:
             loss = tf.reduce_mean((tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits,
                                                                               labels=tf.squeeze(annotation, squeeze_dims=[3]),
