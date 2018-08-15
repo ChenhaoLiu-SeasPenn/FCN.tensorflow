@@ -197,7 +197,7 @@ def main(argv=None):
         annotation = tf.placeholder(tf.int32, shape=[None, 4, 4, 1], name="annotation")
 
         annotation_single = tf.cast(tf.reduce_max(annotation, axis = [1, 2, 3]), tf.int32)
-        print(tf.shape(annotation_single))
+        print(annotation_single)
         pred_annotation, logits = inference(image, keep_probability)
         tf.summary.image("input_image", image, max_outputs=FLAGS.batch_size)
         tf.summary.image("ground_truth", tf.cast(annotation, tf.uint8), max_outputs=FLAGS.batch_size)
