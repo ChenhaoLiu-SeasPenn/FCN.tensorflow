@@ -224,7 +224,8 @@ def main(argv=None):
         # tf.nn.weighted_cross_entropy_with_logits
         
         loss_summary = tf.summary.scalar("entropy", loss)
-        iou_error, update_op = tf.metrics.mean_iou(pred_annotation, annotation, NUM_OF_CLASSESS)
+        iou_error, update_op = tf.metrics.mean_iou(pred_annotation, annotation_single, NUM_OF_CLASSESS)
+        # iou_error, update_op = tf.metrics.mean_iou(pred_annotation, annotation, NUM_OF_CLASSESS)
 
         trainable_var = tf.trainable_variables()
         if FLAGS.debug:
