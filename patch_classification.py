@@ -173,7 +173,7 @@ def inference(image, keep_prob):
 
         softmax = tf.nn.softmax(fc3)
         annotation_pred = tf.multiply(softmax, tf.constant([1, 1], dtype=tf.float32))
-        annotation_pred = tf.argmax(annotation_pred, axis=[1])
+        annotation_pred = tf.argmax(annotation_pred, axis=1)
 
     return annotation_pred, softmax
 
