@@ -149,7 +149,7 @@ def randomCropper():
         annoc_ts.save(annocValOutPath + str(cnt) + '.png')
         ImageOps.flip(annoc_ts).save(annocValOutPath + str(cnt) + '_f.png')
         ImageOps.mirror(annoc_ts).save(annocValOutPath + str(cnt) + '_m.png')
-        if np.sum(np.int32(patchAnno == 4)) > 0:
+        if np.sum(np.int32(patchAnno == 1)) > 0:
           cfile_v.write(imgOutPath + str(cnt) + '.png 1\n')
           cfile_v.write(imgOutPath + str(cnt) + '_f.png 1\n')
           cfile_v.write(imgOutPath + str(cnt) + '_m.png 1\n')
@@ -215,7 +215,7 @@ def regularCropper():
           anno_ts.save(annoOutPath + str(cnt) + '.png')
           annoc_ts.save(annocOutPath + str(cnt) + '.png')
 
-          if np.sum(np.int32(anno_patchClassify == 4)) > 0:
+          if np.sum(np.int32(anno_patchClassify == 1)) > 0:
             cfile.write(imgOutPath + str(cnt) + '.png 1\n')
           else:
             cfile.write(imgOutPath + str(cnt) + '.png 0\n')
