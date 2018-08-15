@@ -172,7 +172,7 @@ def inference(image, keep_prob):
         fc3 = tf.add(tf.matmul(relu_f1, W8), b8, name='fc3')
 
         softmax = tf.nn.softmax(fc3)
-        annotation_pred = tf.multiply(softmax, tf.constant([1, 1]))
+        annotation_pred = tf.multiply(softmax, tf.constant([1, 1], dtype=tf.float32))
         annotation_pred = tf.reduce_max(annotation_pred)
 
     return annotation_pred, softmax
