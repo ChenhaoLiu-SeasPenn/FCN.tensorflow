@@ -225,9 +225,9 @@ def regularCropper():
             print(cnt)
 
 if __name__ == '__main__':
-  converter('../data/multiclass/trainset/')
+  # converter('../data/multiclass/trainset/')
   levels = [18, 19, 20, 21]
   for level in levels:
       converter('../data/multiclass/test_'+str(level) + '/')
-  randomCropper()
+  # randomCropper()
   regularCropper()
