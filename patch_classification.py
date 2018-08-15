@@ -171,9 +171,9 @@ def inference(image, keep_prob):
         b8 = utils.bias_variable([NUM_OF_CLASSESS], name="b8")
         fc3 = tf.add(tf.matmul(relu_f1, W8), b8, name='fc3')
 
-        softmax = tf.nn.softmax(fc3)
-        annotation_pred = tf.multiply(softmax, tf.constant([1, 10], dtype=tf.float32))
-        annotation_pred = tf.argmax(annotation_pred, axis=1)
+        # softmax = tf.nn.softmax(fc3)
+        # annotation_pred = tf.multiply(softmax, tf.constant([1, 10], dtype=tf.float32))
+        annotation_pred = tf.argmax(fc3, axis=1)
 
     return annotation_pred, fc3
 
