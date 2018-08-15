@@ -216,10 +216,10 @@ def main(argv=None):
 
         if FLAGS.pos_weight == 1:
             loss = tf.reduce_mean((tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits,
-                                                                              labels=tf.squeeze(annotation_single, squeeze_dims=[3]),
+                                                                              labels=annotation_single,
                                                                               name="entropy")))
         else:
-            loss = tf.reduce_mean((tf.nn.weighted_cross_entropy_with_logits(targets = tf.one_hot(tf.squeeze(annotation_single, squeeze_dims=[3]), FLAGS.class_num, axis=-1),
+            loss = tf.reduce_mean((tf.nn.weighted_cross_entropy_with_logits(targets = tf.one_hot(annotation_single, FLAGS.class_num, axis=-1),
                                                                               logits=logits,
                                                                               pos_weight=weights,
                                                                               name="entropy")))
