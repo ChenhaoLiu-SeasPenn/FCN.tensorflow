@@ -70,6 +70,58 @@ def vgg_net(weights, image):
 
     return net
 
+# def inference(image, keep_prob):
+#     """
+#     Semantic segmentation network definition
+#     :param image: input image. Should have values in range 0-255
+#     :param keep_prob:
+#     :return:
+#     """
+#     print("setting up vgg initialized conv layers ...")
+#     model_data = utils.get_model_data(FLAGS.model_dir, MODEL_URL)
+#
+#     mean = model_data['normalization'][0][0][0]
+#     mean_pixel = np.mean(mean, axis=(0, 1))
+#
+#     weights = np.squeeze(model_data['layers'])
+#
+#     processed_image = utils.process_image(image, mean_pixel)
+#     # single channel version
+#     # processed_image = image
+#
+#     with tf.variable_scope("inference"):
+#         image_net = vgg_net(weights, processed_image)
+#         # single channel version
+#         # image_net = vgg_net_singlechannel(weights, processed_image)
+#         conv_final_layer = image_net["conv5_3"]
+#
+#         pool5 = utils.max_pool_2x2(conv_final_layer)
+#
+#         # A strided convolution downsamples 7x7 feature map to 4x4
+#         W6 = utils.weight_variable([3, 3, 512, 4096], name="W6")
+#         b6 = utils.bias_variable([4096], name="b6")
+#         conv6 = utils.conv2d_strided(pool5, W6, b6)
+#         relu6 = tf.nn.relu(conv6, name="relu6")
+#         if FLAGS.debug:
+#             utils.add_activation_summary(relu6)
+#         relu_dropout6 = tf.nn.dropout(relu6, keep_prob=keep_prob)
+#
+#         W7 = utils.weight_variable([1, 1, 4096, 4096], name="W7")
+#         b7 = utils.bias_variable([4096], name="b7")
+#         conv7 = utils.conv2d_basic(relu_dropout6, W7, b7)
+#         relu7 = tf.nn.relu(conv7, name="relu7")
+#         if FLAGS.debug:
+#             utils.add_activation_summary(relu7)
+#         relu_dropout7 = tf.nn.dropout(relu7, keep_prob=keep_prob)
+#
+#         W8 = utils.weight_variable([1, 1, 4096, NUM_OF_CLASSESS], name="W8")
+#         b8 = utils.bias_variable([NUM_OF_CLASSESS], name="b8")
+#         conv8 = utils.conv2d_basic(relu_dropout7, W8, b8)
+#
+#         annotation_pred = tf.argmax(conv8, axis=3, name="prediction")
+#
+#     return tf.expand_dims(annotation_pred, dim=3), conv8
+
 def inference(image, keep_prob):
     """
     Semantic segmentation network definition
@@ -97,30 +149,30 @@ def inference(image, keep_prob):
 
         pool5 = utils.max_pool_2x2(conv_final_layer)
 
-        # A strided convolution downsamples 7x7 feature map to 4x4
-        W6 = utils.weight_variable([3, 3, 512, 4096], name="W6")
-        b6 = utils.bias_variable([4096], name="b6")
-        conv6 = utils.conv2d_strided(pool5, W6, b6)
+        pool5_fl = tf.layers.flatten(pool5, name='flatten')
+
+        W6 = utils.weight_variable([512*7*7, 4096], name='W6')
+        conv6 = tf.layers.conv1d(pool5_fl, W6, 512*7*7)
         relu6 = tf.nn.relu(conv6, name="relu6")
         if FLAGS.debug:
             utils.add_activation_summary(relu6)
         relu_dropout6 = tf.nn.dropout(relu6, keep_prob=keep_prob)
-        
-        W7 = utils.weight_variable([1, 1, 4096, 4096], name="W7")
-        b7 = utils.bias_variable([4096], name="b7")
-        conv7 = utils.conv2d_basic(relu_dropout6, W7, b7)
+
+        W7 = utils.weight_variable([4096, 4096], name="W7")
+        conv7 = tf.layers.conv1d(relu_dropout6, W7, 4096)
         relu7 = tf.nn.relu(conv7, name="relu7")
         if FLAGS.debug:
             utils.add_activation_summary(relu7)
         relu_dropout7 = tf.nn.dropout(relu7, keep_prob=keep_prob)
 
-        W8 = utils.weight_variable([1, 1, 4096, NUM_OF_CLASSESS], name="W8")
-        b8 = utils.bias_variable([NUM_OF_CLASSESS], name="b8")
-        conv8 = utils.conv2d_basic(relu_dropout7, W8, b8)
+        W8 = utils.weight_variable([4096, NUM_OF_CLASSESS], name="W8")
+        conv8 = tf.layers.conv1d(relu_dropout7, W8, 4096)
 
-        annotation_pred = tf.argmax(conv8, axis=3, name="prediction")
+        softmax = tf.nn.softmax(conv8)
+        annotation_pred = tf.multiply(softmax, tf.constant([1, 1]))
+        annotation_pred = tf.reduce_max(annotation_pred)
 
-    return tf.expand_dims(annotation_pred, dim=3), conv8
+    return annotation_pred, softmax
 
 
 def train(loss_val, var_list):
@@ -141,6 +193,7 @@ def main(argv=None):
         # image = tf.placeholder(tf.float32, shape=[None, IMAGE_HEIGHT, IMAGE_WIDTH, 1], name="input_image")
         annotation = tf.placeholder(tf.int32, shape=[None, 4, 4, 1], name="annotation")
 
+        annotation_single = tf.cast(tf.reduce_max(annotation, axis = [1, 2, 3]), tf.int32)
         pred_annotation, logits = inference(image, keep_probability)
         tf.summary.image("input_image", image, max_outputs=FLAGS.batch_size)
         tf.summary.image("ground_truth", tf.cast(annotation, tf.uint8), max_outputs=FLAGS.batch_size)
@@ -148,15 +201,26 @@ def main(argv=None):
         weights = np.ones((FLAGS.class_num), dtype=np.int32)
         weights[-1] = FLAGS.pos_weight
         weights = tf.convert_to_tensor(weights, dtype=tf.float32)
+        # if FLAGS.pos_weight == 1:
+        #     loss = tf.reduce_mean((tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits,
+        #                                                                       labels=tf.squeeze(annotation, squeeze_dims=[3]),
+        #                                                                       name="entropy")))
+        # else:
+        #     loss = tf.reduce_mean((tf.nn.weighted_cross_entropy_with_logits(targets = tf.one_hot(tf.squeeze(annotation, squeeze_dims=[3]), FLAGS.class_num, axis=-1),
+        #                                                                       logits=logits,
+        #                                                                       pos_weight=weights,
+        #                                                                       name="entropy")))
+
         if FLAGS.pos_weight == 1:
             loss = tf.reduce_mean((tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits,
-                                                                              labels=tf.squeeze(annotation, squeeze_dims=[3]),
+                                                                              labels=tf.squeeze(annotation_single, squeeze_dims=[3]),
                                                                               name="entropy")))
         else:
-            loss = tf.reduce_mean((tf.nn.weighted_cross_entropy_with_logits(targets = tf.one_hot(tf.squeeze(annotation, squeeze_dims=[3]), FLAGS.class_num, axis=-1),
+            loss = tf.reduce_mean((tf.nn.weighted_cross_entropy_with_logits(targets = tf.one_hot(tf.squeeze(annotation_single, squeeze_dims=[3]), FLAGS.class_num, axis=-1),
                                                                               logits=logits,
                                                                               pos_weight=weights,
                                                                               name="entropy")))
+
         # tf.nn.weighted_cross_entropy_with_logits
         
         loss_summary = tf.summary.scalar("entropy", loss)
