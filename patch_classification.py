@@ -152,23 +152,26 @@ def inference(image, keep_prob):
         pool5_fl = tf.layers.flatten(pool5, name='flatten')
 
         W6 = utils.weight_variable([512*7*7, 4096], name='W6')
-        conv6 = tf.layers.conv1d(pool5_fl, W6, 512*7*7)
-        relu6 = tf.nn.relu(conv6, name="relu6")
+        b6 = utils.bias_variable([4096], name="b6")
+        fc1 = tf.add(tf.matmul(pool5_fl, W6), b6, name='fc1')
+        relu_f1 = tf.nn.relu(fc1, name="relu_f1")
         if FLAGS.debug:
-            utils.add_activation_summary(relu6)
-        relu_dropout6 = tf.nn.dropout(relu6, keep_prob=keep_prob)
+            utils.add_activation_summary(relu_f1)
+        relu_dropout6 = tf.nn.dropout(relu_f1, keep_prob=keep_prob)
 
         W7 = utils.weight_variable([4096, 4096], name="W7")
-        conv7 = tf.layers.conv1d(relu_dropout6, W7, 4096)
-        relu7 = tf.nn.relu(conv7, name="relu7")
+        b7 = utils.bias_variable([4096], name="b7")
+        fc2 = tf.add(tf.matmul(relu_f1, W7), b7, name='fc2')
+        relu_f2 = tf.nn.relu(fc2, name="relu_f2")
         if FLAGS.debug:
-            utils.add_activation_summary(relu7)
-        relu_dropout7 = tf.nn.dropout(relu7, keep_prob=keep_prob)
+            utils.add_activation_summary(relu_f2)
+        relu_dropout7 = tf.nn.dropout(relu_f2, keep_prob=keep_prob)
 
         W8 = utils.weight_variable([4096, NUM_OF_CLASSESS], name="W8")
-        conv8 = tf.layers.conv1d(relu_dropout7, W8, 4096)
+        b8 = utils.bias_variable([NUM_OF_CLASSESS], name="b8")
+        fc3 = tf.add(tf.matmul(relu_f1, W8), b8, name='fc3')
 
-        softmax = tf.nn.softmax(conv8)
+        softmax = tf.nn.softmax(fc3)
         annotation_pred = tf.multiply(softmax, tf.constant([1, 1]))
         annotation_pred = tf.reduce_max(annotation_pred)
 
