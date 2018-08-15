@@ -175,7 +175,7 @@ def inference(image, keep_prob):
         annotation_pred = tf.multiply(softmax, tf.constant([1, 1], dtype=tf.float32))
         annotation_pred = tf.argmax(annotation_pred, axis=1)
 
-    return annotation_pred, softmax
+    return annotation_pred, fc3
 
 
 def train(loss_val, var_list):
