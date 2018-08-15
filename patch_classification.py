@@ -173,7 +173,7 @@ def inference(image, keep_prob):
 
         softmax = tf.nn.softmax(fc3)
         annotation_pred = tf.multiply(softmax, tf.constant([1, 1], dtype=tf.float32))
-        annotation_pred = tf.reduce_max(annotation_pred)
+        annotation_pred = tf.argmax(annotation_pred, axis=[1])
 
     return annotation_pred, softmax
 
@@ -199,6 +199,7 @@ def main(argv=None):
         annotation_single = tf.cast(tf.reduce_max(annotation, axis = [1, 2, 3]), tf.int32)
         print(annotation_single)
         pred_annotation, logits = inference(image, keep_probability)
+        print(pred_annotation)
         tf.summary.image("input_image", image, max_outputs=FLAGS.batch_size)
         tf.summary.image("ground_truth", tf.cast(annotation, tf.uint8), max_outputs=FLAGS.batch_size)
         tf.summary.image("pred_annotation", tf.cast(pred_annotation, tf.uint8), max_outputs=FLAGS.batch_size)
