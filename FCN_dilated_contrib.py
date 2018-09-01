@@ -9,6 +9,11 @@ import datetime
 import TFReader as dataset
 from six.moves import xrange
 from contrib import dense_crf
+import imgaug as ia
+from imgaug import augmenters as iaa
+from imgaug import parameters as iap
+
+
 
 FLAGS = tf.flags.FLAGS
 tf.flags.DEFINE_integer("batch_size", "2", "batch size for training")
@@ -649,11 +654,24 @@ def main(argv=None):
             #Ignore filename from reader
             next_train_images, next_train_annotations, next_train_name = it_train.get_next()
             next_val_images, next_val_annotations, next_val_name = it_val.get_next()
+            seq = iaa.SomeOf((1, 3), [iaa.Affine(rotate=45),
+                             iaa.AdditiveGaussianNoise(scale=0.1*255),
+                             iaa.Fliplr(0.5),
+                             iaa.Flipud(0.5),
+                             iaa.CropAndPad(percent=(-0.1, 0.1)),
+                             iaa.GrayScale(alpha=(0.0, 0.3)),
+                             iaa.ContrastNormalization((0.5, 1.5), per_channel=0.5)])
+            seq_det = seq.to_deterministic()
+            seq_det_cp = seq_det.deepcopy()
+            seq_det_cp.find_augmenters_by_name("Affine")[0].order = iap.Deterministic(0)
+            next_train_images_aug = seq_det.augment_images(next_train_images)
+            next_train_annotations_aug = seq_det_cp.augment_images(next_train_annotations)
+
             
             if not trained_mainnet:
                 for i in xrange(int(MAX_ITERATION // 3 + 1)):
 
-                    train_images, train_annotations = sess.run([next_train_images, next_train_annotations])
+                    train_images, train_annotations = sess.run([next_train_images_aug, next_train_annotations_aug])
                     feed_dict = {image: train_images, annotation: train_annotations, keep_probability: (1 - FLAGS.dropout)}
 
                     sess.run(train_op, feed_dict=feed_dict)

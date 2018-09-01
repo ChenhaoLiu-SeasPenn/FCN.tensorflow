@@ -189,8 +189,9 @@ def regularCropper():
     allImages = os.listdir(imgPath)
     cnt = 0
     for img in allImages:
-      imgFile = os.path.join(imgPath, str(level) + img)
-      annoFile = os.path.join(annoPath, str(level) + img[:-4] + '_label.png')
+
+      imgFile = os.path.join(imgPath, img)
+      annoFile = os.path.join(annoPath, img[:-4] + '_label.png')
 
       if not os.path.isfile(imgFile):
         continue
@@ -209,10 +210,10 @@ def regularCropper():
 
           img_ts = Image.fromarray(patchImg)
           anno_ts = Image.fromarray(patchAnno)
-          annoc_ts = Image.fromarray(anno_patchClassify)
+          # annoc_ts = Image.fromarray(anno_patchClassify)
 
-          img_ts.save(imgOutPath + str(cnt) + '.png')
-          anno_ts.save(annoOutPath + str(cnt) + '.png')
+          img_ts.save(imgOutPath + str(level) + str(cnt) + '.png')
+          anno_ts.save(annoOutPath + str(level) + str(cnt) + '.png')
           # annoc_ts.save(annocOutPath + str(cnt) + '.png')
 
           # if np.sum(np.int32(anno_patchClassify == 1)) > 0:
