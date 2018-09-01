@@ -212,8 +212,8 @@ def regularCropper():
           anno_ts = Image.fromarray(patchAnno)
           # annoc_ts = Image.fromarray(anno_patchClassify)
 
-          img_ts.save(imgOutPath + str(level) + str(cnt) + '.png')
-          anno_ts.save(annoOutPath + str(level) + str(cnt) + '.png')
+          img_ts.save(imgOutPath + str(level) + '_' + str(cnt) + '.png')
+          anno_ts.save(annoOutPath + str(level) +'_' + str(cnt) + '.png')
           # annoc_ts.save(annocOutPath + str(cnt) + '.png')
 
           # if np.sum(np.int32(anno_patchClassify == 1)) > 0:
