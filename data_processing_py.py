@@ -189,8 +189,8 @@ def regularCropper():
     allImages = os.listdir(imgPath)
     cnt = 0
     for img in allImages:
-      imgFile = os.path.join(imgPath, img)
-      annoFile = os.path.join(annoPath, img[:-4] + '_label.png')
+      imgFile = os.path.join(imgPath, str(level) + img)
+      annoFile = os.path.join(annoPath, str(level) + img[:-4] + '_label.png')
 
       if not os.path.isfile(imgFile):
         continue
@@ -203,9 +203,9 @@ def regularCropper():
           patchAnno = anno[256 * j:256 * (j + 1), 256 * i:256 * (i + 1)]
           patchImg = patchImg.astype(np.uint8)
           patchAnno = patchAnno.astype(np.uint8)
-          anno_toSeg = (patchAnno == 4).astype(np.uint8)
+          # anno_toSeg = (patchAnno == 4).astype(np.uint8)
           patchAnno[patchAnno == 4] = 0
-          anno_patchClassify = block_reduce(anno_toSeg, (64, 64), func=np.max)
+          # anno_patchClassify = block_reduce(anno_toSeg, (64, 64), func=np.max)
 
           img_ts = Image.fromarray(patchImg)
           anno_ts = Image.fromarray(patchAnno)
@@ -213,12 +213,12 @@ def regularCropper():
 
           img_ts.save(imgOutPath + str(cnt) + '.png')
           anno_ts.save(annoOutPath + str(cnt) + '.png')
-          annoc_ts.save(annocOutPath + str(cnt) + '.png')
+          # annoc_ts.save(annocOutPath + str(cnt) + '.png')
 
-          if np.sum(np.int32(anno_patchClassify == 1)) > 0:
-            cfile.write(imgOutPath + str(cnt) + '.png 1\n')
-          else:
-            cfile.write(imgOutPath + str(cnt) + '.png 0\n')
+          # if np.sum(np.int32(anno_patchClassify == 1)) > 0:
+          #   cfile.write(imgOutPath + str(cnt) + '.png 1\n')
+          # else:
+          #   cfile.write(imgOutPath + str(cnt) + '.png 0\n')
 
           cnt += 1
           if cnt % 500 == 0:
