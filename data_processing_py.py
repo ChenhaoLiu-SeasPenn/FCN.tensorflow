@@ -340,7 +340,7 @@ def centerCropper():
       rdm_x = np.random.randint(np.maximum(0, x_min - 256), np.minimum(x_c, 1024-256))
       rdm_y = np.random.randint(np.maximum(0, y_min - 256), np.minimum(y_c, 512-256))
       patchImg = img[rdm_y:rdm_y + 256, rdm_x:rdm_x + 256, ...]
-      patchAnno = img[rdm_y:rdm_y + 256, rdm_x:rdm_x + 256]
+      patchAnno = anno[rdm_y:rdm_y + 256, rdm_x:rdm_x + 256]
       patchImg = patchImg.astype(np.uint8)
       patchAnno = patchAnno.astype(np.uint8)
       img_ts = Image.fromarray(patchImg)
@@ -382,10 +382,10 @@ def centerCropper():
 
 if __name__ == '__main__':
   # converter('../data/multiclass/trainset/')
-  levels = [18, 19, 20, 21]
-  for level in levels:
-      converter('../data/multiclass_new/test_'+str(level) + '/')
-  # # randomCropper()
-  regularCropper()
-  converter_amps('../data/amps_all/')
+  # levels = [18, 19, 20, 21]
+  # for level in levels:
+  #     converter('../data/multiclass_new/test_'+str(level) + '/')
+  # # # randomCropper()
+  # regularCropper()
+  # converter_amps('../data/amps_all/')
   centerCropper()
