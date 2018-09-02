@@ -170,18 +170,24 @@ def regularCropper():
     #   rootPath = './amps_train_21/'
     imgPath = rootPath + 'image'
     annoPath = rootPath + 'annotations'
-    imgOutPath = rootPath + 'test/images/training/'
-    annoOutPath = rootPath + 'test/annotations/training/label_'
-    annocOutPath = rootPath + 'test/annotations_patch_classify/training/label_'
+    imgOutPath = rootPath + 'train/images/training/'
+    annoOutPath = rootPath + 'train/annotations/training/label_'
+    annocOutPath = rootPath + 'train/annotations_patch_classify/training/label_'
+    imgValOutPath = rootPath + 'train/images/validation/'
+    annoValOutPath = rootPath + 'train/annotations/validation/label_'
+    annocValOutPath = rootPath + 'train/annotations_patch_classify/validation/label_'
 
-    if not os.path.exists(rootPath + 'test/'):
-      os.mkdir(rootPath + 'test/')
-      os.mkdir(rootPath + 'test/images/')
-      os.mkdir(rootPath + 'test/annotations/')
-      os.mkdir(rootPath + 'test/annotations_patch_classify/')
+    if not os.path.exists(rootPath + 'train/'):
+      os.mkdir(rootPath + 'train/')
+      os.mkdir(rootPath + 'train/images/')
+      os.mkdir(rootPath + 'train/annotations/')
+      os.mkdir(rootPath + 'train/annotations_patch_classify/')
       os.mkdir(imgOutPath)
       os.mkdir(annoOutPath[:-6])
       os.mkdir(annocOutPath[:-6])
+      os.mkdir(imgValOutPath)
+      os.mkdir(annoValOutPath[:-6])
+      os.mkdir(annocValOutPath[:-6])
 
     cfile = open(rootPath + 'classification_data_train.txt', 'w')
     scales = [1, 1, 1, 1, 1, 1]
@@ -192,16 +198,17 @@ def regularCropper():
 
       imgFile = os.path.join(imgPath, img)
       annoFile = os.path.join(annoPath, img[:-4] + '_label.png')
+      rdmstate = np.random.rand(1)
 
       if not os.path.isfile(imgFile):
         continue
       img = np.asarray(Image.open(imgFile))
       anno = np.asarray(Image.open(annoFile))
 
-      for i in range(4):
-        for j in range(2):
-          patchImg = img[256 * j:256 * (j + 1), 256 * i:256 * (i + 1), ...]
-          patchAnno = anno[256 * j:256 * (j + 1), 256 * i:256 * (i + 1)]
+      for i in range(4*2-1):
+        for j in range(2*2-1):
+          patchImg = img[128 * j:128 * (j + 2), 128 * i:128 * (i + 2), ...]
+          patchAnno = anno[128 * j:128 * (j + 2), 128 * i:128 * (i + 2)]
           patchImg = patchImg.astype(np.uint8)
           patchAnno = patchAnno.astype(np.uint8)
           # anno_toSeg = (patchAnno == 4).astype(np.uint8)
@@ -212,8 +219,12 @@ def regularCropper():
           anno_ts = Image.fromarray(patchAnno)
           # annoc_ts = Image.fromarray(anno_patchClassify)
 
-          img_ts.save(imgOutPath + str(level) + '_' + str(cnt) + '.png')
-          anno_ts.save(annoOutPath + str(level) +'_' + str(cnt) + '.png')
+          if rdmstate <= 0.5:
+            img_ts.save(imgOutPath + str(level) + '_' + str(cnt) + '.png')
+            anno_ts.save(annoOutPath + str(level) +'_' + str(cnt) + '.png')
+          else:
+            img_ts.save(imgValOutPath + str(level) + '_' + str(cnt) + '.png')
+            anno_ts.save(annoValOutPath + str(level) + '_' + str(cnt) + '.png')
           # annoc_ts.save(annocOutPath + str(cnt) + '.png')
 
           # if np.sum(np.int32(anno_patchClassify == 1)) > 0:
@@ -225,10 +236,156 @@ def regularCropper():
           if cnt % 500 == 0:
             print(cnt)
 
+
+def converter_amps(r_path):
+  in_path = r_path + 'annotation'
+  out_path = r_path + 'annotations'
+  bin_path = r_path + 'annotations_bin'
+
+  #     in_path = './amps_train_21/annotation'
+  #     out_path = './amps_train_21/annotations'
+  #     bin_path = './amps_train_21/annotations_bin'
+
+  if not os.path.exists(out_path):
+    os.mkdir(out_path)
+    os.mkdir(bin_path)
+
+  colors = {'trees': np.array([197, 180, 178]), 'houses': np.array([214, 178, 228]),
+            'road': np.array([178, 208, 228]), 'Amps': np.array([228, 178, 178]),
+            'Amps_overlay': np.array([233, 143, 143]), 'houses_overlay': np.array([208, 143, 233]),
+            'tree_on_road': np.array([162, 169, 183])}
+  # colors = {'trees': np.array([197, 180, 178]), 'houses': np.array([214, 178, 228]),
+  #           'road': np.array([178, 208, 228]),  'houses_overlay': np.array([208, 143, 233]),
+  #          'tree_on_road': np.array([162, 169, 183])}
+  colors_lbl = {'trees': np.array([255, 0, 0]), 'houses': np.array([0, 255, 0]),
+                'road': np.array([0, 0, 255]), 'Amps': np.array([255, 255, 0]),
+                'Amps_overlay': np.array([255, 255, 0]), 'houses_overlay': np.array([0, 255, 0]),
+                'tree_on_road': np.array([255, 0, 0])}
+  # colors_lbl = {'trees': np.array([255, 0, 0]), 'houses': np.array([0, 255, 0]),
+  #               'road': np.array([0, 0, 255]), 'houses_overlay': np.array([0, 255, 0]),
+  #              'tree_on_road': np.array([255, 0, 0])}
+  bin_lbl = {'trees': 0, 'houses': 0, 'road': 1, 'Amps': 2, 'Amps_overlay': 2,
+             'houses_overlay': 0, 'tree_on_road': 0}
+  # bin_lbl ={'trees': 1, 'houses': 2, 'road': 3,
+  #           'houses_overlay': 2, 'tree_on_road': 1}
+
+  in_img = os.listdir(in_path)
+
+  for file in in_img:
+
+    if os.path.isfile(os.path.join(in_path, file)):
+
+      label = np.asarray(Image.open(os.path.join(in_path, file)))
+      label = label[..., :-1]
+
+      label_bin = np.zeros(label.shape[:-1])
+      label_color = np.zeros_like(label)
+      for type_lbl, _ in colors.items():
+        diff = np.sum(np.abs(label - colors[type_lbl].reshape(1, 1, -1)), axis=2)
+        label_bin[np.where(diff < 10)] = bin_lbl[type_lbl]
+        label_color[np.where(diff < 10)] = colors_lbl[type_lbl].reshape(1, 1, -1)
+
+      # print np.max(label_bin)
+
+      label_handle = Image.fromarray(label_bin.astype(np.uint8))
+      label_handle2 = Image.fromarray(label_color.astype(np.uint8))
+      label_handle.save(os.path.join(out_path, file))
+      label_handle2.save(os.path.join(bin_path, file))
+
+
+def centerCropper():
+  rootPath = 'H:/ROBO Master/AerialApp/Summer/data/amps_all/'
+  #   rootPath = './amps_train_21/'
+  imgPath = rootPath + 'image'
+  annoPath = rootPath + 'annotations'
+  imgOutPath = rootPath + 'train/images/training/'
+  annoOutPath = rootPath + 'train/annotations/training/label_'
+  annocOutPath = rootPath + 'train/annotations_patch_classify/training/label_'
+  imgValOutPath = rootPath + 'train/images/validation/'
+  annoValOutPath = rootPath + 'train/annotations/validation/label_'
+  annocValOutPath = rootPath + 'train/annotations_patch_classify/validation/label_'
+
+  if not os.path.exists(rootPath + 'train/'):
+    os.mkdir(rootPath + 'train/')
+    os.mkdir(rootPath + 'train/images/')
+    os.mkdir(rootPath + 'train/annotations/')
+    os.mkdir(rootPath + 'train/annotations_patch_classify/')
+    os.mkdir(imgOutPath)
+    os.mkdir(annoOutPath[:-6])
+    os.mkdir(annocOutPath[:-6])
+    os.mkdir(imgValOutPath)
+    os.mkdir(annoValOutPath[:-6])
+    os.mkdir(annocValOutPath[:-6])
+
+
+  allImages = os.listdir(imgPath)
+  cnt = 0
+  for img in allImages:
+
+    imgFile = os.path.join(imgPath, img)
+    annoFile = os.path.join(annoPath, img[:-4] + '_label.png')
+    rdmstate = np.random.rand(1)
+
+    if not os.path.isfile(imgFile):
+      continue
+    img = np.asarray(Image.open(imgFile))
+    anno = np.asarray(Image.open(annoFile))
+
+    y,x = np.where(anno == 2)
+    x_min, x_max, y_min, y_max = np.min(x), np.max(x), np.min(y), np.max(y)
+    x_c, y_c = int(0.5*(x_min+x_max)), int(0.5*(y_min+y_max))
+
+    for rdmnbr in range(100):
+
+      rdm_x = np.random.randint(np.maximum(0, x_min - 256), np.minimum(x_c, 1024-256))
+      rdm_y = np.random.randint(np.maximum(0, y_min - 256), np.minimum(y_c, 512-256))
+      patchImg = img[rdm_y:rdm_y + 256, rdm_x:rdm_x + 256, ...]
+      patchAnno = img[rdm_y:rdm_y + 256, rdm_x:rdm_x + 256]
+      patchImg = patchImg.astype(np.uint8)
+      patchAnno = patchAnno.astype(np.uint8)
+      img_ts = Image.fromarray(patchImg)
+      anno_ts = Image.fromarray(patchAnno)
+
+      if rdmstate <= 0.5:
+        img_ts.save(imgOutPath + str(cnt) + '.png')
+        anno_ts.save(annoOutPath + str(cnt) + '.png')
+      else:
+        img_ts.save(imgValOutPath + str(cnt) + '.png')
+        anno_ts.save(annoValOutPath + str(cnt) + '.png')
+
+      cnt += 1
+      if cnt % 500 == 0:
+        print(cnt)
+
+    for rdmnbr in range(50):
+
+      rdm_x = np.random.randint(0, 1024-256)
+      rdm_y = np.random.randint(0, 512-256)
+      patchImg = img[rdm_y:rdm_y + 256, rdm_x:rdm_x + 256, ...]
+      patchAnno = img[rdm_y:rdm_y + 256, rdm_x:rdm_x + 256]
+      patchImg = patchImg.astype(np.uint8)
+      patchAnno = patchAnno.astype(np.uint8)
+      img_ts = Image.fromarray(patchImg)
+      anno_ts = Image.fromarray(patchAnno)
+
+      if rdmstate <= 0.5:
+        img_ts.save(imgOutPath + str(cnt) + '.png')
+        anno_ts.save(annoOutPath + str(cnt) + '.png')
+      else:
+        img_ts.save(imgValOutPath + str(cnt) + '.png')
+        anno_ts.save(annoValOutPath + str(cnt) + '.png')
+
+      cnt += 1
+      if cnt % 500 == 0:
+        print(cnt)
+
+
 if __name__ == '__main__':
   # converter('../data/multiclass/trainset/')
   levels = [18, 19, 20, 21]
   for level in levels:
       converter('../data/multiclass_new/test_'+str(level) + '/')
-  # randomCropper()
+  # # randomCropper()
   regularCropper()
+  converter_amps('../data/amps_all/')
+  centerCropper()
