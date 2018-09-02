@@ -294,7 +294,7 @@ def converter_amps(r_path):
 
 
 def centerCropper():
-  rootPath = 'H:/ROBO Master/AerialApp/Summer/data/amps_all/'
+  rootPath = '../data/amps_all/'
   #   rootPath = './amps_train_21/'
   imgPath = rootPath + 'image'
   annoPath = rootPath + 'annotations'
