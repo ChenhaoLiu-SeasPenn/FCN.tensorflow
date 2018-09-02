@@ -362,7 +362,7 @@ def centerCropper():
       rdm_x = np.random.randint(0, 1024-256)
       rdm_y = np.random.randint(0, 512-256)
       patchImg = img[rdm_y:rdm_y + 256, rdm_x:rdm_x + 256, ...]
-      patchAnno = img[rdm_y:rdm_y + 256, rdm_x:rdm_x + 256]
+      patchAnno = anno[rdm_y:rdm_y + 256, rdm_x:rdm_x + 256]
       patchImg = patchImg.astype(np.uint8)
       patchAnno = patchAnno.astype(np.uint8)
       img_ts = Image.fromarray(patchImg)
