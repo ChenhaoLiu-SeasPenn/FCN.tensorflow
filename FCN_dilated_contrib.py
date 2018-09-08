@@ -440,7 +440,7 @@ def context_net(weights, fmap):
 
 
 # Inference, denseCRF
-def inference(image, keep_prob, enable_context):
+def inference(image, keep_prob):
   """
   Semantic segmentation network definition
   :param image: input image. Should have values in range 0-255
@@ -459,14 +459,14 @@ def inference(image, keep_prob, enable_context):
 
   processed_image = utils.process_image(image, mean_pixel)
 
-  with tf.variable_scope("inference", reuse = tf.AUTO_REUSE):
+  with tf.variable_scope("inference", reuse=tf.AUTO_REUSE):
     image_net = vgg_dilated(weights, processed_image)
-    
+
     conv_final_layer = image_net['conv5_3']
 
     W6 = utils.weight_variable([7, 7, 512, 4096], name="W6")
     b6 = utils.bias_variable([4096], name="b6")
-    conv6 = utils.conv2d_dilated(conv_final_layer, W6, b6, rate = 4)
+    conv6 = utils.conv2d_dilated(conv_final_layer, W6, b6, rate=4)
     relu6 = tf.nn.relu(conv6, name="relu6")
     if FLAGS.debug:
       utils.add_activation_summary(relu6)
@@ -483,59 +483,66 @@ def inference(image, keep_prob, enable_context):
     W8 = utils.weight_variable([1, 1, 4096, NUM_OF_CLASSESS], name="W8")
     b8 = utils.bias_variable([NUM_OF_CLASSESS], name="b8")
     conv8 = utils.conv2d_basic(relu_dropout7, W8, b8)
-    
+
   # Contextual network part
-  with tf.variable_scope("context", reuse = tf.AUTO_REUSE):
-    Wd_1 = utils.weight_variable_cconv([3, 3, NUM_OF_CLASSESS, NUM_OF_CLASSESS], name="Wd_1")
-    bd_1 = utils.bias_variable([NUM_OF_CLASSESS], name="bd_1")
-    convd_1 = utils.conv2d_dilated(conv8, Wd_1, bd_1, rate=1)
-    relud_1 = tf.nn.relu(convd_1, name='relud_1')
-    
-    Wd_2 = utils.weight_variable_cconv([3, 3, NUM_OF_CLASSESS, NUM_OF_CLASSESS], name="Wd_2")
-    bd_2 = utils.bias_variable([NUM_OF_CLASSESS], name="bd_2")
-    convd_2 = utils.conv2d_dilated(relud_1, Wd_2, bd_2, rate=1)
-    relud_2 = tf.nn.relu(convd_2, name='relud_2')
-    
-    Wd_3 = utils.weight_variable_cconv([3, 3, NUM_OF_CLASSESS, NUM_OF_CLASSESS], name="Wd_3")
-    bd_3 = utils.bias_variable([NUM_OF_CLASSESS], name="bd_3")
-    convd_3 = utils.conv2d_dilated(relud_2, Wd_3, bd_3, rate=2)
-    relud_3 = tf.nn.relu(convd_3, name='relud_3')
-    
-    Wd_4 = utils.weight_variable_cconv([3, 3, NUM_OF_CLASSESS, NUM_OF_CLASSESS], name="Wd_4")
-    bd_4 = utils.bias_variable([NUM_OF_CLASSESS], name="bd_4")
-    convd_4 = utils.conv2d_dilated(relud_3, Wd_4, bd_4, rate=4)
-    relud_4 = tf.nn.relu(convd_4, name='relud_4')
+  # with tf.variable_scope("context", reuse=tf.AUTO_REUSE):
+  #   Wd_1 = TensorflowUtils.weight_variable_cconv([3, 3, NUM_OF_CLASSESS, NUM_OF_CLASSESS], name="Wd_1")
+  #   bd_1 = TensorflowUtils.bias_variable([NUM_OF_CLASSESS], name="bd_1")
+  #   convd_1 = TensorflowUtils.conv2d_dilated(conv8, Wd_1, bd_1, rate=1)
+  #   relud_1 = tf.nn.relu(convd_1, name='relud_1')
+  #
+  #   Wd_2 = TensorflowUtils.weight_variable_cconv([3, 3, NUM_OF_CLASSESS, NUM_OF_CLASSESS], name="Wd_2")
+  #   bd_2 = TensorflowUtils.bias_variable([NUM_OF_CLASSESS], name="bd_2")
+  #   convd_2 = TensorflowUtils.conv2d_dilated(relud_1, Wd_2, bd_2, rate=1)
+  #   relud_2 = tf.nn.relu(convd_2, name='relud_2')
+  #
+  #   Wd_3 = TensorflowUtils.weight_variable_cconv([3, 3, NUM_OF_CLASSESS, NUM_OF_CLASSESS], name="Wd_3")
+  #   bd_3 = TensorflowUtils.bias_variable([NUM_OF_CLASSESS], name="bd_3")
+  #   convd_3 = TensorflowUtils.conv2d_dilated(relud_2, Wd_3, bd_3, rate=2)
+  #   relud_3 = tf.nn.relu(convd_3, name='relud_3')
+  #
+  #   Wd_4 = TensorflowUtils.weight_variable_cconv([3, 3, NUM_OF_CLASSESS, NUM_OF_CLASSESS], name="Wd_4")
+  #   bd_4 = TensorflowUtils.bias_variable([NUM_OF_CLASSESS], name="bd_4")
+  #   convd_4 = TensorflowUtils.conv2d_dilated(relud_3, Wd_4, bd_4, rate=4)
+  #   relud_4 = tf.nn.relu(convd_4, name='relud_4')
+  #
+  #   Wd_7 = TensorflowUtils.weight_variable_cconv([3, 3, NUM_OF_CLASSESS, NUM_OF_CLASSESS], name="Wd_7")
+  #   bd_7 = TensorflowUtils.bias_variable([NUM_OF_CLASSESS], name="bd_7")
+  #   convd_7 = TensorflowUtils.conv2d_dilated(relud_4, Wd_7, bd_7, rate=1)
+  #   relud_7 = tf.nn.relu(convd_7, name='relud_7')
+  #
+  #   Wd_8 = TensorflowUtils.weight_variable_cconv([1, 1, NUM_OF_CLASSESS, NUM_OF_CLASSESS], name="Wd_8")
+  #   bd_8 = TensorflowUtils.bias_variable([NUM_OF_CLASSESS], name="bd_8")
+  #   convd_8 = TensorflowUtils.conv2d_dilated(relud_7, Wd_8, bd_8, rate=1)
 
-    Wd_7 = utils.weight_variable_cconv([3, 3, NUM_OF_CLASSESS, NUM_OF_CLASSESS], name="Wd_7")
-    bd_7 = utils.bias_variable([NUM_OF_CLASSESS], name="bd_7")
-    convd_7 = utils.conv2d_dilated(relud_4, Wd_7, bd_7, rate=1)
-    relud_7 = tf.nn.relu(convd_7, name='relud_7')
-    
-    Wd_8 = utils.weight_variable_cconv([1, 1, NUM_OF_CLASSESS, NUM_OF_CLASSESS], name="Wd_8")
-    bd_8 = utils.bias_variable([NUM_OF_CLASSESS], name="bd_8")
-    convd_8 = utils.conv2d_dilated(relud_7, Wd_8, bd_8, rate=1)
-
-  with tf.variable_scope("final", reuse = tf.AUTO_REUSE):
+  with tf.variable_scope("final", reuse=tf.AUTO_REUSE):
     # now to upscale to actual image size
     shape = tf.shape(image)
     deconv_shape = tf.stack([shape[0], shape[1], shape[2], NUM_OF_CLASSESS])
     W_t = utils.weight_variable([16, 16, NUM_OF_CLASSESS, NUM_OF_CLASSESS], name="W_t")
     b_t = utils.bias_variable([NUM_OF_CLASSESS], name="b_t")
-    if enable_context == False:
-        conv_t3 = utils.conv2d_transpose_strided(conv8, W_t, b_t, output_shape=deconv_shape, stride=8)
-    else:
-        conv_t3 = utils.conv2d_transpose_strided(convd_8, W_t, b_t, output_shape=deconv_shape, stride=8)
+
+    # W_t2 = TensorflowUtils.weight_variable([16, 16, NUM_OF_CLASSESS, NUM_OF_CLASSESS], name="W_t2")
+    # b_t2 = TensorflowUtils.bias_variable([NUM_OF_CLASSESS], name="b_t2")
+    # if enable_context == False:
+    conv_t3 = utils.conv2d_transpose_strided(conv8, W_t, b_t, output_shape=deconv_shape, stride=8)
+    # else:
+    # conv_t3_dconv = TensorflowUtils.conv2d_transpose_strided(convd_8, W_t2, b_t2, output_shape=deconv_shape, stride=8)
 
     # May not need this
-    raw_output_up = tf.image.resize_bilinear(conv_t3, tf.shape(image)[1:3,])
-    
+    raw_output_up = tf.image.resize_bilinear(conv_t3, tf.shape(image)[1:3, ])
+
     # CRF.
     raw_output_up = tf.nn.softmax(raw_output_up)
-#     raw_output_up = tf.py_func(dense_crf, [raw_output_up, FLAGS.class_num, tf.expand_dims(image, dim=0)], tf.float32)
+    #     raw_output_up = tf.py_func(dense_crf, [raw_output_up, FLAGS.class_num, tf.expand_dims(image, dim=0)], tf.float32)
     raw_output_up = tf.py_func(dense_crf, [raw_output_up, FLAGS.class_num, image], tf.float32)
-    
+
     raw_output_up = tf.argmax(raw_output_up, dimension=3)
     annotation_pred = tf.expand_dims(raw_output_up, dim=3)
+
+    # annotation_pred = tf.argmax(conv_t3, axis=3, name="prediction")
+
+  # return tf.expand_dims(annotation_pred, dim=3), conv_t3
 
   return annotation_pred, conv_t3
 
@@ -555,12 +562,12 @@ def main(argv=None):
         image = tf.placeholder(tf.float32, shape=[None, IMAGE_HEIGHT, IMAGE_WIDTH, 3], name="input_image")
         annotation = tf.placeholder(tf.int32, shape=[None, IMAGE_HEIGHT, IMAGE_WIDTH, 1], name="annotation")
 
-        pred_annotation, logits = inference(image, keep_probability, enable_context = False)
-        pred_annotation_ctx, logits_ctx = inference(image, keep_probability, enable_context = True)
+        pred_annotation, logits = inference(image, keep_probability)
+        # pred_annotation_ctx, logits_ctx = inference(image, keep_probability)
         tf.summary.image("input_image", image, max_outputs=FLAGS.batch_size)
         tf.summary.image("ground_truth", tf.cast(annotation, tf.uint8), max_outputs=FLAGS.batch_size)
         tf.summary.image("pred_annotation", tf.cast(pred_annotation, tf.uint8), max_outputs=FLAGS.batch_size)
-        tf.summary.image("pred_annotation_ctx", tf.cast(pred_annotation_ctx, tf.uint8), max_outputs=FLAGS.batch_size)
+        # tf.summary.image("pred_annotation_ctx", tf.cast(pred_annotation_ctx, tf.uint8), max_outputs=FLAGS.batch_size)
         weights = np.ones((FLAGS.class_num), dtype=np.int32)
         weights[-1] = FLAGS.pos_weight
         weights = tf.convert_to_tensor(weights, dtype=tf.float32)
@@ -568,31 +575,31 @@ def main(argv=None):
             loss = tf.reduce_mean((tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits,
                                                                               labels=tf.squeeze(annotation, squeeze_dims=[3]),
                                                                               name="entropy")))
-            loss_ctx = tf.reduce_mean((tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits_ctx,
-                                                                                      labels=tf.squeeze(annotation,
-                                                                                                        squeeze_dims=[3]),
-                                                                                      name="entropy_ctx")))
+            # loss_ctx = tf.reduce_mean((tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits_ctx,
+            #                                                                           labels=tf.squeeze(annotation,
+            #                                                                                             squeeze_dims=[3]),
+            #                                                                           name="entropy_ctx")))
         else:
             loss = tf.reduce_mean((tf.nn.weighted_cross_entropy_with_logits(targets = tf.one_hot(tf.squeeze(annotation, squeeze_dims=[3]), FLAGS.class_num, axis=-1),
                                                                               logits=logits,
                                                                               pos_weight=weights,
                                                                               name="entropy")))
-            loss_ctx = tf.reduce_mean((tf.nn.weighted_cross_entropy_with_logits(
-              targets=tf.one_hot(tf.squeeze(annotation, squeeze_dims=[3]), FLAGS.class_num, axis=-1),
-              logits=logits_ctx,
-              pos_weight=weights,
-              name="entropy")))
+            # loss_ctx = tf.reduce_mean((tf.nn.weighted_cross_entropy_with_logits(
+            #   targets=tf.one_hot(tf.squeeze(annotation, squeeze_dims=[3]), FLAGS.class_num, axis=-1),
+            #   logits=logits_ctx,
+            #   pos_weight=weights,
+            #   name="entropy")))
         
         loss_summary = tf.summary.scalar("entropy", loss)
-        loss_summary_ctx = tf.summary.scalar("entropy", loss_ctx)
-        iou_error, update_op = tf.metrics.mean_iou(annotation, pred_annotation_ctx, NUM_OF_CLASSESS)
+        # loss_summary_ctx = tf.summary.scalar("entropy", loss_ctx)
+        iou_error, update_op = tf.metrics.mean_iou(annotation, pred_annotation, NUM_OF_CLASSESS)
         
         # Now all training will be done in one run
-        if FLAGS.tune_context == True:
-            trainable_var_ctx = tf.trainable_variables(scope = 'context') + tf.trainable_variables(scope = 'final')
-            ctx_train_op = train(loss_ctx, trainable_var_ctx, lr = FLAGS.learning_rate*10)
-            ctx_train_op_ft = train(loss_ctx, trainable_var_ctx, lr = FLAGS.learning_rate)
-            print('Context network enabled')
+        # if FLAGS.tune_context == True:
+        trainable_var_ctx = tf.trainable_variables(scope = 'context') + tf.trainable_variables(scope = 'final')
+            # ctx_train_op = train(loss_ctx, trainable_var_ctx, lr = FLAGS.learning_rate*10)
+            # ctx_train_op_ft = train(loss_ctx, trainable_var_ctx, lr = FLAGS.learning_rate)
+            # print('Context network enabled')
         trainable_var = tf.trainable_variables(scope = 'inference') + tf.trainable_variables(scope = 'final')
         train_op = train(loss, trainable_var, lr = FLAGS.learning_rate)
         
@@ -668,8 +675,8 @@ def main(argv=None):
             # next_train_annotations_aug = seq_det_cp.augment_images(next_train_annotations)
 
             
-            if not trained_mainnet:
-                for i in xrange(int(MAX_ITERATION // 3 + 1)):
+            if 1:
+                for i in xrange(int(MAX_ITERATION+ 1)):
 
                     train_images, train_annotations = sess.run([next_train_images, next_train_annotations])
                     feed_dict = {image: train_images, annotation: train_annotations, keep_probability: (1 - FLAGS.dropout)}
@@ -691,52 +698,52 @@ def main(argv=None):
                         # add validation loss to TensorBoard
                         validation_writer.add_summary(summary_sva, i)
                         saver.save(sess, FLAGS.logs_dir + "model.ckpt", i)
-            if FLAGS.tune_context:        
-                for i in xrange(int(MAX_ITERATION // 3 + 1)):
-
-                    train_images, train_annotations = sess.run([next_train_images, next_train_annotations])
-                    feed_dict = {image: train_images, annotation: train_annotations, keep_probability: (1 - FLAGS.dropout)}
-
-                    sess.run(ctx_train_op, feed_dict=feed_dict)
-
-                    if i % 10 == 0:
-                        train_loss, summary_str = sess.run([loss_ctx, loss_summary_ctx], feed_dict=feed_dict)
-                        print("ContExt -- Step: %d, Train_loss:%g" % (i, train_loss))
-                        train_writer.add_summary(summary_str, i)
-
-                    if i % 500 == 0:
-
-                        valid_images, valid_annotations = sess.run([next_val_images, next_val_annotations])
-                        valid_loss, summary_sva = sess.run([loss_ctx, loss_summary_ctx], feed_dict={image: valid_images, annotation: valid_annotations,
-                                                               keep_probability: 1.0})
-                        print("%s ---> Validation_loss: %g" % (datetime.datetime.now(), valid_loss))
-
-                        # add validation loss to TensorBoard
-                        validation_writer.add_summary(summary_sva, i)
-                        saver.save(sess, FLAGS.logs_dir + "model_context.ckpt", i)
-
-                for i in xrange(int(MAX_ITERATION // 3 + 1)):
-
-                    train_images, train_annotations = sess.run([next_train_images, next_train_annotations])
-                    feed_dict = {image: train_images, annotation: train_annotations, keep_probability: (1 - FLAGS.dropout)}
-
-                    sess.run(ctx_train_op_ft, feed_dict=feed_dict)
-
-                    if i % 10 == 0:
-                        train_loss, summary_str = sess.run([loss_ctx, loss_summary_ctx], feed_dict=feed_dict)
-                        print("ContExt -- Step: %d, Train_loss:%g" % (i+int(MAX_ITERATION // 3), train_loss))
-                        train_writer.add_summary(summary_str, i)
-
-                    if i % 500 == 0:
-
-                        valid_images, valid_annotations = sess.run([next_val_images, next_val_annotations])
-                        valid_loss, summary_sva = sess.run([loss_ctx, loss_summary_ctx], feed_dict={image: valid_images, annotation: valid_annotations,
-                                                               keep_probability: 1.0})
-                        print("%s ---> Validation_loss: %g" % (datetime.datetime.now(), valid_loss))
-
-                        # add validation loss to TensorBoard
-                        validation_writer.add_summary(summary_sva, i)
-                        saver.save(sess, FLAGS.logs_dir + "model_context.ckpt", i)
+            # if FLAGS.tune_context:
+            #     for i in xrange(int(MAX_ITERATION // 3 + 1)):
+            #
+            #         train_images, train_annotations = sess.run([next_train_images, next_train_annotations])
+            #         feed_dict = {image: train_images, annotation: train_annotations, keep_probability: (1 - FLAGS.dropout)}
+            #
+            #         sess.run(ctx_train_op, feed_dict=feed_dict)
+            #
+            #         if i % 10 == 0:
+            #             train_loss, summary_str = sess.run([loss_ctx, loss_summary_ctx], feed_dict=feed_dict)
+            #             print("ContExt -- Step: %d, Train_loss:%g" % (i, train_loss))
+            #             train_writer.add_summary(summary_str, i)
+            #
+            #         if i % 500 == 0:
+            #
+            #             valid_images, valid_annotations = sess.run([next_val_images, next_val_annotations])
+            #             valid_loss, summary_sva = sess.run([loss_ctx, loss_summary_ctx], feed_dict={image: valid_images, annotation: valid_annotations,
+            #                                                    keep_probability: 1.0})
+            #             print("%s ---> Validation_loss: %g" % (datetime.datetime.now(), valid_loss))
+            #
+            #             # add validation loss to TensorBoard
+            #             validation_writer.add_summary(summary_sva, i)
+            #             saver.save(sess, FLAGS.logs_dir + "model_context.ckpt", i)
+            #
+            #     for i in xrange(int(MAX_ITERATION // 3 + 1)):
+            #
+            #         train_images, train_annotations = sess.run([next_train_images, next_train_annotations])
+            #         feed_dict = {image: train_images, annotation: train_annotations, keep_probability: (1 - FLAGS.dropout)}
+            #
+            #         sess.run(ctx_train_op_ft, feed_dict=feed_dict)
+            #
+            #         if i % 10 == 0:
+            #             train_loss, summary_str = sess.run([loss_ctx, loss_summary_ctx], feed_dict=feed_dict)
+            #             print("ContExt -- Step: %d, Train_loss:%g" % (i+int(MAX_ITERATION // 3), train_loss))
+            #             train_writer.add_summary(summary_str, i)
+            #
+            #         if i % 500 == 0:
+            #
+            #             valid_images, valid_annotations = sess.run([next_val_images, next_val_annotations])
+            #             valid_loss, summary_sva = sess.run([loss_ctx, loss_summary_ctx], feed_dict={image: valid_images, annotation: valid_annotations,
+            #                                                    keep_probability: 1.0})
+            #             print("%s ---> Validation_loss: %g" % (datetime.datetime.now(), valid_loss))
+            #
+            #             # add validation loss to TensorBoard
+            #             validation_writer.add_summary(summary_sva, i)
+            #             saver.save(sess, FLAGS.logs_dir + "model_context.ckpt", i)
 
 
         elif FLAGS.mode == "visualize":
@@ -770,9 +777,9 @@ def main(argv=None):
                 if (i % 10 == 0):
                     print("Predicted {}/{} images".format(i, no_predict_images))
                 predict_images, predict_names = sess.run(next_test_image)
-                pred, logits = sess.run([pred_annotation_ctx, logits_ctx], feed_dict={image: predict_images,
+                pred= sess.run(pred_annotation, feed_dict={image: predict_images,
                                                             keep_probability: 1.0})
-                logits = logits[0, ...]
+                # logits = logits[0, ...]
                 pred = np.squeeze(pred, axis=3)
 #                 print(np.unique(pred))
                 utils.save_image((pred[0] * (255 / 3)).astype(np.uint8), os.path.join(FLAGS.logs_dir, "predictions"),
