@@ -33,10 +33,10 @@ tf.flags.DEFINE_float('pos_weight', '1', 'Weight for FNs, higher increases recal
 
 MODEL_URL = 'http://www.vlfeat.org/matconvnet/models/beta16/imagenet-vgg-verydeep-19.mat'
 
-MAX_ITERATION = int(1.5e5)
+MAX_ITERATION = int(3e4)
 NUM_OF_CLASSESS = FLAGS.class_num
-IMAGE_WIDTH = 224
-IMAGE_HEIGHT = 224
+IMAGE_WIDTH = 640
+IMAGE_HEIGHT = 640
 
 
 def vgg_dilated(weights, image):
